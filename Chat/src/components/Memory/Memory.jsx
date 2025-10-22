@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { MemoryContext } from '../../Context/maincontext.jsx';
+import { MemoryContext } from './Context/memoryProvider.jsx';
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
 import DarkVeil from '../../DarkVeil/DarkVeil';
 import axios from "axios";

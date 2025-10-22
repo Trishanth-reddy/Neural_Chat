@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MemoryContext } from '../../Context/maincontext.jsx';
+import { MemoryContext } from './Context/memoryProvider.jsx';
 import { PaymentContext } from '../../Context/maincontext.jsx';
 import DarkVeil from '../../DarkVeil/DarkVeil';
 import {

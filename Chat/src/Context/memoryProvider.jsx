@@ -1,5 +1,6 @@
-import { useState, useEffect, useContext, createContext } from "react";
+import { useState, useEffect, useContext, createContext } from "react"; // Added createContext
 import axios from "axios";
+// import { MemoryContext } from "./maincontext.jsx"; // <-- DELETE THIS LINE
 import { useAuth } from "./authContext.jsx";
 import axiosInstance from "../api/axiosInstance";
 
