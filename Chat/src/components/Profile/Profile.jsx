@@ -27,7 +27,7 @@ function Profile() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/auth/v1/me', {
+                const response = await axios.get('https://neural-chat-prss.onrender.com/api/auth/v1/me', {
                     withCredentials: true,
                 });
                 setUser(response.data);

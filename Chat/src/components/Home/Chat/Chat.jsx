@@ -27,7 +27,7 @@ const Chat = () => {
         const fetchChatHistory = async () => {
             setLoading(true);
             try {
-                const response = await axios.get(`http://localhost:5000/api/chat/v1/${chatId}`, {
+                const response = await axios.get(`https://neural-chat-prss.onrender.com/api/chat/v1/${chatId}`, {
                     withCredentials: true,
                 });
                 setMessages(response.data.messages);
@@ -75,7 +75,7 @@ My question is: ${currentInput}`;
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/api/chat/v1/stream', {
+            const response = await axios.post('https://neural-chat-prss.onrender.com/api/chat/v1/stream', {
                 userId: user._id,
                 chatId: chatId, // Pass current chatId (or undefined for a new chat)
                 message: userMessage,
