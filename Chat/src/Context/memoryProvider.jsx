@@ -1,3 +1,11 @@
+
+import React, { useState, useEffect, createContext } from 'react';
+import axiosInstance from '../api/axiosInstance.js';
+import { useAuth } from './authContext.jsx';
+
+
+
+export const MemoryContext = createContext(null);
 export const MemoryProvider = ({ children }) => {
   const { user, isLoading: isAuthLoading } = useAuth();
 

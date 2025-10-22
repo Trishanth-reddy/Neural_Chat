@@ -85,3 +85,4 @@ const AuthForm = ({ mode, schema }) => {
 };
 
 export default AuthForm;
+

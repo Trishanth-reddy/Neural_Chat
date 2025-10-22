@@ -5,3 +5,4 @@ import { signupSchema } from '../../utils/validation';
 export default function Signup() {
   return <AuthForm mode="signup" schema={signupSchema} />;
 }
+
