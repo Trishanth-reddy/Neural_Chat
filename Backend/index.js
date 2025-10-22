@@ -36,7 +36,7 @@ app.use(compression());
 app.use(cookieParser());
 
 // CORS configuration
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173").split(",");
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173" || "https://neural-chat-sooty.vercel.app").split(",");
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) callback(null, true);
