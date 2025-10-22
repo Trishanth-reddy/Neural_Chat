@@ -1,4 +1,4 @@
-// Backend/server.js
+// Backend/index.js (or server.js)
 
 import express from "express";
 import dotenv from "dotenv";
@@ -18,6 +18,11 @@ dotenv.config();
 
 const app = express();
 
+// --- FIX 1: TRUST RENDER'S PROXY ---
+// This tells Express to trust the X-Forwarded-For header from Render.
+// It MUST come before you use rateLimit or cors.
+app.set('trust proxy', 1); 
+
 // Rate limiter for all /api routes
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -35,12 +40,21 @@ app.use(compression());
 // Cookie parser must come before CORS when credentials are involved
 app.use(cookieParser());
 
-// CORS configuration
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173" || "https://neural-chat-sooty.vercel.app").split(",");
+// --- FIX 2: CORRECT CORS CONFIGURATION ---
+// Define origins as a proper array
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // This should be 'https://neural-chat-sooty.vercel.app'
+  "http://localhost:5173"   // For local development
+];
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error("CORS policy: This origin is not allowed"));
+    // Allow requests with no origin (like Postman) or from our list
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS policy: This origin is not allowed"));
+    }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -48,6 +62,7 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 app.use(cors(corsOptions));
+// --- END OF FIXES ---
 
 // JSON body parsing
 app.use(express.json({ limit: "5mb" }));
