@@ -11,14 +11,38 @@ function Memory() {
     // FIX: Removed insecure frontend API key and Mistral client.
     // All AI processing is now securely handled by your backend.
 
-    const { memoryData, setMemoryData } = useContext(MemoryContext);
+   const context = useContext(MemoryContext);
+    
+    if (!context) {
+        return (
+            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
+                <div className="text-center">
+                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
+                    <p className="text-xl text-white/80">Initializing memory system...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    const { memoryData, setMemoryData, isLoading: contextLoading } = context;
     const { wyd, know, trait, structuredData } = memoryData;
 
-    // FIX: Create a dedicated state for the PDF filename to simplify logic.
     const [localPdfFilename, setLocalPdfFilename] = useState('');
-    
     const [isLoading, setIsLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState('');
+
+    // Show loading screen while initial data is loading
+    if (contextLoading) {
+        return (
+            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
+                <DarkVeil className="absolute inset-0 w-full h-full z-0" />
+                <div className="text-center z-10">
+                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
+                    <p className="text-xl text-white/80">Loading your memory data...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Fetch existing memory data when the component mounts
     useEffect(() => {

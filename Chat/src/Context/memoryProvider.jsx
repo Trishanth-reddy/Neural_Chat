@@ -1,14 +1,4 @@
-import { useState, useEffect, useContext, createContext } from "react"; // Added createContext
-import axios from "axios";
-// import { MemoryContext } from "./maincontext.jsx"; // <-- DELETE THIS LINE
-import { useAuth } from "./authContext.jsx";
-import axiosInstance from "../api/axiosInstance";
-
-// Create and export the context
-export const MemoryContext = createContext(null);
-
 export const MemoryProvider = ({ children }) => {
-  // --- 1. GET THE LOADING STATE FROM AUTH ---
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const [memoryData, setMemoryData] = useState({
@@ -20,17 +10,14 @@ export const MemoryProvider = ({ children }) => {
     structuredData: null,
   });
 
-  const [isLoading, setIsLoading] = useState(false); // This is MemoryProvider's own loading state
+  const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  // --- 2. UPDATE THE useEffect HOOK ---
   useEffect(() => {
-    // Wait for the auth check to finish
     if (isAuthLoading) {
-      return; // Do nothing, still checking session
+      return;
     }
 
-    // Auth is finished, AND there is no user
     if (!user) {
       setMemoryData({
         wyd: "",
@@ -41,10 +28,9 @@ export const MemoryProvider = ({ children }) => {
         structuredData: null,
       });
       setFetchError(null);
-      return; // Stop here
+      return;
     }
 
-    // --- If we get here, isAuthLoading is false AND user exists ---
     const fetchMemoryData = async () => {
       setIsLoading(true);
       setFetchError(null);
@@ -57,39 +43,38 @@ export const MemoryProvider = ({ children }) => {
           ...response.data,
         }));
       } catch (error) {
-        setFetchError(
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch memory data"
-        );
-        setMemoryData({
-          wyd: "",
-          know: "",
-          trait: "",
-          pdfFile: null,
-          pdfText: "",
-          structuredData: null,
-        });
+        // Don't treat 404 as error for new users
+        if (error.response?.status === 404) {
+          console.log("No memory data found - new user");
+          setFetchError(null);
+        } else {
+          console.error("Error fetching memory:", error);
+          setFetchError(
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch memory data"
+          );
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMemoryData(); 
-  }, [user, isAuthLoading]); // <-- 3. ADD isAuthLoading TO THE DEPENDENCY ARRAY
+    fetchMemoryData();
+  }, [user, isAuthLoading]);
 
-  const value = { memoryData, setMemoryData, isLoading, fetchError };
+  // ALWAYS provide a value object, never null
+  const value = { 
+    memoryData, 
+    setMemoryData, 
+    isLoading: isLoading || isAuthLoading, // Combine both loading states
+    fetchError 
+  };
 
   return (
     <MemoryContext.Provider value={value}>
-      {fetchError ? (
-        <div className="w-full h-full flex items-center justify-center bg-black text-red-400 text-xl">
-          Memory fetch failed: {fetchError}
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </MemoryContext.Provider>
   );
 };
