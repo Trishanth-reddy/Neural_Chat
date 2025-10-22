@@ -1,8 +1,12 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, createContext } from "react"; // Added createContext
 import axios from "axios";
-import { MemoryContext } from "./maincontext.jsx";
+// import { MemoryContext } from "./maincontext.jsx"; // REMOVED THIS - THIS WAS THE PROBLEM
 import { useAuth } from "./authContext.jsx"; // Adjust the path as needed
 import axiosInstance from "../api/axiosInstance";
+
+// --- THIS IS THE FIX ---
+// Create and export the context in this file
+export const MemoryContext = createContext(null);
 
 export const MemoryProvider = ({ children }) => {
   const { user } = useAuth();
@@ -37,7 +41,7 @@ export const MemoryProvider = ({ children }) => {
       setIsLoading(true);
       setFetchError(null);
       try {
-        const response = await await axiosInstance.get(`/api/memory/v1`, {
+        const response = await axiosInstance.get(`/api/memory/v1`, {
           withCredentials: true,
         });
         setMemoryData(prevData => ({
