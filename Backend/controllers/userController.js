@@ -1,4 +1,3 @@
-// Backend/controllers/userController.js
 import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -11,8 +10,8 @@ const generateTokenAndSetCookie = (userId, res) => {
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: "lax",
+    secure: process.env.NODE_ENV !== "development", // This is correct
+    sameSite: "none", // <-- THIS WAS THE FIX (changed from "lax")
     maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
   });
 
@@ -53,7 +52,7 @@ export const signup = async (req, res) => {
 
     await newUser.save();
 
-    // Generate token and set cookie
+    // Generate token and set cookie (now uses correct settings)
     generateTokenAndSetCookie(newUser._id, res);
 
     // Send response
@@ -91,7 +90,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
-    // Generate token and set cookie
+    // Generate token and set cookie (now uses correct settings)
     generateTokenAndSetCookie(user._id, res);
 
     // Send response
@@ -110,7 +109,13 @@ export const login = async (req, res) => {
 // LOGOUT CONTROLLER
 export const logout = (req, res) => {
   try {
-    res.cookie('jwt', '', { maxAge: 0 });
+    // *** FIX: Clear the cookie with the same secure/sameSite settings ***
+    res.cookie('jwt', '', { 
+      maxAge: 0,
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "development",
+      sameSite: "none",
+    });
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.error("Logout error:", error.message);

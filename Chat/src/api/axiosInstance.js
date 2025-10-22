@@ -9,7 +9,6 @@ const axiosInstance = axios.create({
 
   headers: {
     'Content-Type': 'application/json',
-    // withCredentials: true, // <-- REMOVE THIS LINE. It's not a header.
   },
 });
 
@@ -17,7 +16,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
-    // You can add toast notifications here
     return Promise.reject(error);
   }
 );
