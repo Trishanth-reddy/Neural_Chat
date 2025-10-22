@@ -1,11 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { MemoryContext } from '../../Context/maincontext';
+import { MemoryContext } from '../../Context/maincontext.jsx';
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
 import DarkVeil from '../../DarkVeil/DarkVeil';
 import axios from "axios";
 // FIX: Your axiosInstance should be used for authenticated requests.
 // Ensure it's configured to include credentials by default.
-import axiosInstance from '../../api/axiosInstance';
+import axiosInstance from '../../api/axiosInstance.js';
 
 function Memory() {
     // FIX: Removed insecure frontend API key and Mistral client.

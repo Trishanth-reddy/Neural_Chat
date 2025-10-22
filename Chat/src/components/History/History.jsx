@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../Context/AuthContext';
+import { useAuth } from '../../Context/authContext.jsx';
 import DarkVeil from '../../DarkVeil/DarkVeil';
 import { Search, Clock, MessageCircle, AlertCircle } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
