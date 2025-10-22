@@ -2,39 +2,37 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MemoryContext } from '../../Context/memoryProvider.jsx';
 import { PaymentContext } from '../../Context/PaymentProvider.jsx';
-import DarkVeil from '../../DarkVeil/DarkVeil';
+import DarkVeil from '../../DarkVeil/DarkVeil.jsx';
+import axiosInstance from '../../api/axiosInstance.js';
 import {
     Mail, Bot, Edit, Trash2, Crown, ShieldCheck,
     Sparkles, User, Camera, FileText, Settings
 } from 'lucide-react';
-import axios from 'axios'; // FIX: Imported axios
+
 
 function Profile() {
+    // ============ ALL HOOKS AT THE TOP ============
     const { memoryData, setMemoryData } = useContext(MemoryContext);
     const { paymentData } = useContext(PaymentContext);
     const navigate = useNavigate();
 
-    // FIX: State to hold user data fetched from the backend
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // State for avatar
     const [avatarUrl, setAvatarUrl] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
     const [imageError, setImageError] = useState(false);
 
-    // FIX: Fetch user data when the component mounts
+    // ============ ALL useEffect HOOKS ============
+    // Fetch user data when the component mounts
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get('https://neural-chat-prss.onrender.com/api/auth/v1/me', {
-                    withCredentials: true,
-                });
+                const response = await axiosInstance.get('/api/auth/v1/me');
                 setUser(response.data);
             } catch (error) {
                 console.error("Failed to fetch user data", error);
                 if (error.response?.status === 401) {
-                    navigate('/login'); // Redirect to login if not authenticated
+                    navigate('/login');
                 }
             } finally {
                 setLoading(false);
@@ -42,9 +40,26 @@ function Profile() {
         };
         fetchUser();
     }, [navigate]);
-    
 
-    // Handlers
+    // Cleanup blob URL when component unmounts or avatarUrl changes
+    useEffect(() => {
+        return () => {
+            if (avatarUrl && avatarUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(avatarUrl);
+            }
+        };
+    }, [avatarUrl]);
+
+    // ============ CONDITIONAL CHECKS AFTER ALL HOOKS ============
+    if (loading) {
+        return (
+            <div className="relative w-full h-screen flex justify-center items-center text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                <div className="w-8 h-8 border-4 border-violet-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // ============ EVENT HANDLERS ============
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -63,14 +78,6 @@ function Profile() {
         return initials.slice(0, 2).toUpperCase();
     };
 
-    useEffect(() => {
-        return () => {
-            if (avatarUrl && avatarUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(avatarUrl);
-            }
-        };
-    }, [avatarUrl]);
-
     const handleEditMemory = () => navigate('/memory');
 
     const handleClearMemory = () => {
@@ -83,11 +90,10 @@ function Profile() {
             pdfText: '',
             structuredData: null
         }));
-        // FIX: Replaced alert with a less intrusive confirmation if needed, or just perform the action.
         console.log("AI memory has been cleared.");
     };
 
-    // Plan details
+    // ============ PLAN DETAILS ============
     const planDetails = {
         'Basic': {
             text: 'Basic Plan',
@@ -109,14 +115,7 @@ function Profile() {
     const currentPlan = planDetails[paymentData.planName] || planDetails.Basic;
     const PlanIcon = currentPlan.icon;
 
-    if (loading) {
-        return (
-            <div className="relative w-full h-screen flex justify-center items-center text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-                <div className="w-8 h-8 border-4 border-violet-400 border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
-
+    // ============ MAIN RENDER ============
     return (
         <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans">
             <DarkVeil className="absolute inset-0 w-full h-full z-0" />
@@ -281,29 +280,27 @@ function Profile() {
                                 </div>
 
                                 {/* Document Status */}
-                                {/* Document Status */}
-<div className="space-y-3 md:col-span-2 pt-4 border-t border-white/10">
-    <div className="flex items-center space-x-2 text-white/80">
-        <FileText className="w-4 h-4 text-violet-400" />
-        <span className="font-medium">Active Document</span>
-    </div>
-    <div className="p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-        {memoryData.pdfFilename ? (
-            <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div>
-                    {/* FIX: Display the pdfFilename string from the database */}
-                    <p className="text-emerald-300 font-medium text-sm">{memoryData.pdfFilename}</p>
-                    <p className="text-white/50 text-xs">Document analyzed and ready</p>
-                </div>
-            </div>
-        ) : (
-            <p className="text-white/50 italic text-sm">No document uploaded</p>
-        )}
-    </div>
-</div>
+                                <div className="space-y-3 md:col-span-2 pt-4 border-t border-white/10">
+                                    <div className="flex items-center space-x-2 text-white/80">
+                                        <FileText className="w-4 h-4 text-violet-400" />
+                                        <span className="font-medium">Active Document</span>
+                                    </div>
+                                    <div className="p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+                                        {memoryData.pdfFilename ? (
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                                    <FileText className="w-4 h-4 text-emerald-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-emerald-300 font-medium text-sm">{memoryData.pdfFilename}</p>
+                                                    <p className="text-white/50 text-xs">Document analyzed and ready</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-white/50 italic text-sm">No document uploaded</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -314,5 +311,3 @@ function Profile() {
 }
 
 export default Profile;
-
-
