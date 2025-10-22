@@ -1,18 +1,17 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { MemoryContext } from '../../Context/memoryProvider.jsx';
+import React, { Suspense, lazy, useState, useEffect, useContext } from 'react';
+import { MemoryContext } from '../../Context/MemoryProvider.jsx';
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
-import DarkVeil from '../../DarkVeil/DarkVeil';
-import axios from "axios";
-// FIX: Your axiosInstance should be used for authenticated requests.
-// Ensure it's configured to include credentials by default.
+import DarkVeil from '../../DarkVeil/DarkVeil.jsx';
 import axiosInstance from '../../api/axiosInstance.js';
 
 function Memory() {
-    // FIX: Removed insecure frontend API key and Mistral client.
-    // All AI processing is now securely handled by your backend.
+    // ============ ALL HOOKS AT THE TOP ============
+    const context = useContext(MemoryContext);
+    const [localPdfFilename, setLocalPdfFilename] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [saveStatus, setSaveStatus] = useState('');
 
-   const context = useContext(MemoryContext);
-    
+    // ============ CONDITIONAL CHECKS AFTER HOOKS ============
     if (!context) {
         return (
             <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
@@ -23,13 +22,9 @@ function Memory() {
             </div>
         );
     }
-    
+
     const { memoryData, setMemoryData, isLoading: contextLoading } = context;
     const { wyd, know, trait, structuredData } = memoryData;
-
-    const [localPdfFilename, setLocalPdfFilename] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [saveStatus, setSaveStatus] = useState('');
 
     // Show loading screen while initial data is loading
     if (contextLoading) {
@@ -44,11 +39,11 @@ function Memory() {
         );
     }
 
+    // ============ ALL OTHER HOOKS AFTER CONTEXT CHECK ============
     // Fetch existing memory data when the component mounts
     useEffect(() => {
         const fetchMemory = async () => {
             try {
-                // FIX: Using axiosInstance for consistency.
                 const response = await axiosInstance.get('/api/memory/v1/');
                 
                 if (response.data) {
@@ -58,14 +53,11 @@ function Memory() {
                         know: response.data.know || '',
                         trait: response.data.trait || '',
                         structuredData: response.data.structuredData || null,
-                        // pdfFile is a temporary object, we only need the filename.
                         pdfFile: response.data.pdfFilename ? { name: response.data.pdfFilename } : null,
                     }));
-                    // FIX: Set the dedicated state for the filename.
                     setLocalPdfFilename(response.data.pdfFilename || '');
                 }
             } catch (error) {
-                // It's normal for a new user to not have memory, so 404 is not an error here.
                 if (error.response?.status !== 404) {
                     console.error("Error fetching memory:", error);
                 }
@@ -74,12 +66,11 @@ function Memory() {
         fetchMemory();
     }, [setMemoryData]);
 
-
+    // ============ EVENT HANDLERS ============
     const handleInputChange = (field) => (e) => {
         setMemoryData(prev => ({ ...prev, [field]: e.target.value }));
     };
 
-    // on file select:
     const handlePdfChange = async e => {
         const file = e.target.files[0];
         if (!file) return;
@@ -97,24 +88,19 @@ function Memory() {
             
             setMemoryData(prev => ({
                 ...prev,
-                // We no longer need to store the full file object in context long-term
                 structuredData: data.structuredData
             }));
 
-            // FIX: Update the local filename state after successful upload.
             setLocalPdfFilename(file.name);
 
         } catch (err) {
             console.error("Error processing PDF:", err);
-            // Optionally, provide user feedback here
         } finally {
             setIsLoading(false);
         }
     };
 
-
     const handleClearPdf = () => {
-        // FIX: Clear all related data from context AND local state.
         setMemoryData(prev => ({ ...prev, structuredData: null, pdfFile: null }));
         setLocalPdfFilename('');
     };
@@ -127,8 +113,6 @@ function Memory() {
                 know,
                 trait,
                 structuredData,
-                // FIX: Use the reliable local state for the filename.
-                // Send `null` if the filename is empty.
                 pdfFilename: localPdfFilename || null
             };
             
@@ -142,10 +126,11 @@ function Memory() {
             console.error("Failed to save memory:", err);
             setSaveStatus('Failed to save.');
         } finally {
-            setTimeout(() => setSaveStatus(''), 2000); // Clear status after 2 seconds
+            setTimeout(() => setSaveStatus(''), 2000);
         }
     };
 
+    // ============ MAIN RENDER ============
     return (
         <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans">
             <DarkVeil className="absolute inset-0 w-full h-full z-0" />
@@ -271,7 +256,7 @@ function Memory() {
                                     </div>
                                 )}
 
-                                {/* FIX: Display file info using the `localPdfFilename` state. */}
+                                {/* File Info Display */}
                                 {localPdfFilename && !isLoading && (
                                     <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                                         <div className="flex items-center justify-between">
@@ -308,7 +293,7 @@ function Memory() {
 
                     {/* Save Button */}
                     <div className="flex justify-end items-center mt-8 pt-6 border-t border-white/10">
-                         {saveStatus && <p className="text-sm text-white/70 mr-4 transition-opacity duration-300">{saveStatus}</p>}
+                        {saveStatus && <p className="text-sm text-white/70 mr-4 transition-opacity duration-300">{saveStatus}</p>}
                         <button
                             onClick={handleSaveChanges}
                             disabled={saveStatus === 'Saving...'}
@@ -325,5 +310,3 @@ function Memory() {
 }
 
 export default Memory;
-
-
