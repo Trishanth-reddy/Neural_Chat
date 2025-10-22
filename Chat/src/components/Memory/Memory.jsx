@@ -1,52 +1,27 @@
-import React, { Suspense, lazy, useState, useEffect, useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { MemoryContext } from '../../Context/memoryProvider.jsx';
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
 import DarkVeil from '../../DarkVeil/DarkVeil.jsx';
 import axiosInstance from '../../api/axiosInstance.js';
 
+
 function Memory() {
-    // ============ ALL HOOKS AT THE TOP ============
+    // ============ ALL HOOKS AT THE TOP - BEFORE ANY CONDITIONS ============
     const context = useContext(MemoryContext);
     const [localPdfFilename, setLocalPdfFilename] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState('');
 
-    // ============ CONDITIONAL CHECKS AFTER HOOKS ============
-    if (!context) {
-        return (
-            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
-                <div className="text-center">
-                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
-                    <p className="text-xl text-white/80">Initializing memory system...</p>
-                </div>
-            </div>
-        );
-    }
-
-    const { memoryData, setMemoryData, isLoading: contextLoading } = context;
-    const { wyd, know, trait, structuredData } = memoryData;
-
-    // Show loading screen while initial data is loading
-    if (contextLoading) {
-        return (
-            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
-                <DarkVeil className="absolute inset-0 w-full h-full z-0" />
-                <div className="text-center z-10">
-                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
-                    <p className="text-xl text-white/80">Loading your memory data...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // ============ ALL OTHER HOOKS AFTER CONTEXT CHECK ============
-    // Fetch existing memory data when the component mounts
+    // IMPORTANT: useEffect MUST be called here, not inside any condition
     useEffect(() => {
+        if (!context) return; // Early exit from effect, not return from component
+        
         const fetchMemory = async () => {
             try {
                 const response = await axiosInstance.get('/api/memory/v1/');
                 
                 if (response.data) {
+                    const { setMemoryData } = context;
                     setMemoryData(prev => ({
                         ...prev,
                         wyd: response.data.wyd || '',
@@ -64,7 +39,36 @@ function Memory() {
             }
         };
         fetchMemory();
-    }, [setMemoryData]);
+    }, [context]); // Include context in dependency
+
+
+    // ============ CONDITIONAL CHECKS AFTER ALL HOOKS ============
+    if (!context) {
+        return (
+            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
+                <div className="text-center">
+                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
+                    <p className="text-xl text-white/80">Initializing memory system...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { memoryData, setMemoryData, isLoading: contextLoading } = context;
+    const { wyd, know, trait, structuredData } = memoryData;
+
+    if (contextLoading) {
+        return (
+            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
+                <DarkVeil className="absolute inset-0 w-full h-full z-0" />
+                <div className="text-center z-10">
+                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
+                    <p className="text-xl text-white/80">Loading your memory data...</p>
+                </div>
+            </div>
+        );
+    }
+
 
     // ============ EVENT HANDLERS ============
     const handleInputChange = (field) => (e) => {
@@ -92,7 +96,6 @@ function Memory() {
             }));
 
             setLocalPdfFilename(file.name);
-
         } catch (err) {
             console.error("Error processing PDF:", err);
         } finally {
@@ -116,11 +119,7 @@ function Memory() {
                 pdfFilename: localPdfFilename || null
             };
             
-            await axiosInstance.post(
-                '/api/memory/v1/saveMemory',
-                payload
-            );
-            
+            await axiosInstance.post('/api/memory/v1/saveMemory', payload);
             setSaveStatus('Saved successfully!');
         } catch (err) {
             console.error("Failed to save memory:", err);
@@ -129,6 +128,7 @@ function Memory() {
             setTimeout(() => setSaveStatus(''), 2000);
         }
     };
+
 
     // ============ MAIN RENDER ============
     return (
