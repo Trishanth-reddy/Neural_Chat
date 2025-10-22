@@ -1,15 +1,14 @@
-import { useState, useEffect, useContext, createContext } from "react"; // Added createContext
+import { useState, useEffect, useContext, createContext } from "react";
 import axios from "axios";
-// import { MemoryContext } from "./maincontext.jsx"; // REMOVED THIS - THIS WAS THE PROBLEM
-import { useAuth } from "./authContext.jsx"; // Adjust the path as needed
+import { useAuth } from "./authContext.jsx";
 import axiosInstance from "../api/axiosInstance";
 
-// --- THIS IS THE FIX ---
-// Create and export the context in this file
+// Create and export the context
 export const MemoryContext = createContext(null);
 
 export const MemoryProvider = ({ children }) => {
-  const { user } = useAuth();
+  // --- 1. GET THE LOADING STATE FROM AUTH ---
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const [memoryData, setMemoryData] = useState({
     wyd: "",
@@ -20,10 +19,17 @@ export const MemoryProvider = ({ children }) => {
     structuredData: null,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // This is MemoryProvider's own loading state
   const [fetchError, setFetchError] = useState(null);
 
+  // --- 2. UPDATE THE useEffect HOOK ---
   useEffect(() => {
+    // Wait for the auth check to finish
+    if (isAuthLoading) {
+      return; // Do nothing, still checking session
+    }
+
+    // Auth is finished, AND there is no user
     if (!user) {
       setMemoryData({
         wyd: "",
@@ -34,9 +40,10 @@ export const MemoryProvider = ({ children }) => {
         structuredData: null,
       });
       setFetchError(null);
-      return;
+      return; // Stop here
     }
 
+    // --- If we get here, isAuthLoading is false AND user exists ---
     const fetchMemoryData = async () => {
       setIsLoading(true);
       setFetchError(null);
@@ -55,7 +62,6 @@ export const MemoryProvider = ({ children }) => {
           error.message ||
           "Failed to fetch memory data"
         );
-        // Set memory to default even on error so UI still works
         setMemoryData({
           wyd: "",
           know: "",
@@ -70,13 +76,12 @@ export const MemoryProvider = ({ children }) => {
     };
 
     fetchMemoryData(); 
-  }, [user]);
+  }, [user, isAuthLoading]); // <-- 3. ADD isAuthLoading TO THE DEPENDENCY ARRAY
 
   const value = { memoryData, setMemoryData, isLoading, fetchError };
 
   return (
     <MemoryContext.Provider value={value}>
-      {/* Error fallback UI so rest of the app doesn’t break */}
       {fetchError ? (
         <div className="w-full h-full flex items-center justify-center bg-black text-red-400 text-xl">
           Memory fetch failed: {fetchError}
