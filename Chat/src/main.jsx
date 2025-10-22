@@ -5,7 +5,7 @@ import App from './App.jsx';
 import { BrowserRouter } from 'react-router-dom';
 import { MemoryProvider } from './Context/memoryProvider.jsx';
 import { PaymentProvider } from './Context/PaymentProvider.jsx';
-import { AuthProvider } from './Context/AuthContext.jsx';
+import { AuthProvider } from './Context/authContext.jsx';
 
 createRoot(document.getElementById('root')).render(
     <BrowserRouter>
