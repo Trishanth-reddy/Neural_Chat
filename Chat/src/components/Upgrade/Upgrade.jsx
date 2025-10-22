@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import DarkVeil from '../../DarkVeil/DarkVeil';
-import { PaymentContext } from '../../Context/maincontext';
+import { PaymentContext } from '../../Context/PaymentProvider.jsx';
 import { 
   Check, Crown, Zap, Shield, Sparkles, 
   Users, BarChart3, Headphones, Globe 
