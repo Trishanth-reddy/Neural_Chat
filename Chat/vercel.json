@@ -4,5 +4,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "tracing": {
+    "enabled": true,
+    "onUncaughtException": true
+  },
+  "installCommand": "npm install --legacy-peer-deps"
 }
