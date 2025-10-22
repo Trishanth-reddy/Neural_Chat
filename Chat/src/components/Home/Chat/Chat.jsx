@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../Context/authContext';
+import { useAuth } from '../../../Context/authContext.jsx';
 import { MemoryContext } from '../../../Context/memoryProvider.jsx';
 import DarkVeil from '../../../DarkVeil/DarkVeil';
 import axios from 'axios';
