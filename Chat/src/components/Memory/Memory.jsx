@@ -1,21 +1,28 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { MemoryContext } from '../../Context/memoryProvider.jsx';
+// 1. Import useAuth to get the user ID
+import { useAuth } from '../../Context/authContext.jsx'; 
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
 import DarkVeil from '../../DarkVeil/DarkVeil.jsx';
 import axiosInstance from '../../api/axiosInstance.js';
 
-
 function Memory() {
+    // ============ ALL HOOKS AT THE TOP ============
     const context = useContext(MemoryContext);
+    // 2. Get the user from Auth Context
+    const { user } = useAuth(); 
+    
     const [localPdfFilename, setLocalPdfFilename] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState('');
 
-    // IMPORTANT: useEffect MUST be called here, not inside any condition
     useEffect(() => {
-        if (!context) return; // Early exit from effect, not return from component
+        if (!context) return;
         
         const fetchMemory = async () => {
+            // Optional: If your backend needs userId for GET requests as query param, handle it here.
+            // But usually, GET relies on cookies/tokens. 
+            // If GET is working but POST isn't, the issue is definitely the payload below.
             try {
                 const response = await axiosInstance.get('/api/memory/v1/');
                 
@@ -38,10 +45,9 @@ function Memory() {
             }
         };
         fetchMemory();
-    }, [context]); // Include context in dependency
+    }, [context]);
 
-
-    // ============ CONDITIONAL CHECKS AFTER ALL HOOKS ============
+    // ============ CONDITIONAL CHECKS ============
     if (!context) {
         return (
             <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
@@ -68,7 +74,6 @@ function Memory() {
         );
     }
 
-
     // ============ EVENT HANDLERS ============
     const handleInputChange = (field) => (e) => {
         setMemoryData(prev => ({ ...prev, [field]: e.target.value }));
@@ -83,6 +88,9 @@ function Memory() {
             const form = new FormData();
             form.append("pdf", file);
             
+            // Should likely pass userId here too if your PDF processor needs to save to a specific user folder
+            if (user?._id) form.append("userId", user._id); 
+
             const { data } = await axiosInstance.post(
                 "/api/memory/v1/processPdf",
                 form,
@@ -108,9 +116,15 @@ function Memory() {
     };
 
     const handleSaveChanges = async () => {
+        if (!user) {
+            setSaveStatus('Error: User not logged in');
+            return;
+        }
+
         setSaveStatus('Saving...');
         try {
             const payload = {
+                userId: user._id, // <--- 3. CRITICAL FIX: Send the User ID
                 wyd,
                 know,
                 trait,
@@ -128,8 +142,7 @@ function Memory() {
         }
     };
 
-
-    // ============ MAIN RENDER ============
+    // ============ MAIN RENDER (Unchanged) ============
     return (
         <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans">
             <DarkVeil className="absolute inset-0 w-full h-full z-0" />
