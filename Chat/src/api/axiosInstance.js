@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get the backend URL from your Vercel environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = "https://neural-chat-prss.onrender.com";
 
 const axiosInstance = axios.create({
   // LOGIC: Use the Env Var if it exists. If not, use localhost.

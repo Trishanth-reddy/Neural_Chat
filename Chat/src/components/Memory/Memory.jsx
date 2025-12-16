@@ -1,67 +1,36 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { MemoryContext } from '../../Context/memoryProvider.jsx';
-// 1. Import useAuth to get the user ID
 import { useAuth } from '../../Context/authContext.jsx'; 
 import { Bot, FileText, UploadCloud, Trash2, Save, Brain, Zap, Shield } from 'lucide-react';
 import DarkVeil from '../../DarkVeil/DarkVeil.jsx';
 import axiosInstance from '../../api/axiosInstance.js';
 
 function Memory() {
-    // ============ ALL HOOKS AT THE TOP ============
-    const context = useContext(MemoryContext);
-    // 2. Get the user from Auth Context
+    // ============ HOOKS ============
+    // 1. Get data/functions from the Provider
+    const { memoryData, setMemoryData, isLoading: contextLoading } = useContext(MemoryContext);
+    
+    // 2. Get user for ID (needed for saving)
     const { user } = useAuth(); 
     
+    // 3. Local UI state for the filename (visual only)
     const [localPdfFilename, setLocalPdfFilename] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // Local loading for PDF upload
     const [saveStatus, setSaveStatus] = useState('');
 
+    // ============ THE FIX: SYNC STATE ONLY ============
+    // Instead of fetching again, just sync the local filename 
+    // when the provider data becomes available.
     useEffect(() => {
-        if (!context) return;
-        
-        const fetchMemory = async () => {
-            // Optional: If your backend needs userId for GET requests as query param, handle it here.
-            // But usually, GET relies on cookies/tokens. 
-            // If GET is working but POST isn't, the issue is definitely the payload below.
-            try {
-                const response = await axiosInstance.get('/api/memory/v1/');
-                
-                if (response.data) {
-                    const { setMemoryData } = context;
-                    setMemoryData(prev => ({
-                        ...prev,
-                        wyd: response.data.wyd || '',
-                        know: response.data.know || '',
-                        trait: response.data.trait || '',
-                        structuredData: response.data.structuredData || null,
-                        pdfFile: response.data.pdfFilename ? { name: response.data.pdfFilename } : null,
-                    }));
-                    setLocalPdfFilename(response.data.pdfFilename || '');
-                }
-            } catch (error) {
-                if (error.response?.status !== 404) {
-                    console.error("Error fetching memory:", error);
-                }
-            }
-        };
-        fetchMemory();
-    }, [context]);
+        if (memoryData?.pdfFilename) {
+            setLocalPdfFilename(memoryData.pdfFilename);
+        } else if (memoryData?.pdfFile?.name) {
+            setLocalPdfFilename(memoryData.pdfFile.name);
+        }
+    }, [memoryData]); // Only run when provider data changes
 
-    // ============ CONDITIONAL CHECKS ============
-    if (!context) {
-        return (
-            <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
-                <div className="text-center">
-                    <Brain className="w-16 h-16 text-violet-400 mx-auto mb-4 animate-pulse" />
-                    <p className="text-xl text-white/80">Initializing memory system...</p>
-                </div>
-            </div>
-        );
-    }
-
-    const { memoryData, setMemoryData, isLoading: contextLoading } = context;
-    const { wyd, know, trait, structuredData } = memoryData;
-
+    // ============ LOADING STATE ============
+    // If the Provider is still fetching, show the loader
     if (contextLoading) {
         return (
             <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans flex items-center justify-center">
@@ -74,7 +43,10 @@ function Memory() {
         );
     }
 
-    // ============ EVENT HANDLERS ============
+    // Destructure data for the inputs
+    const { wyd, know, trait, structuredData } = memoryData;
+
+    // ============ HANDLERS ============
     const handleInputChange = (field) => (e) => {
         setMemoryData(prev => ({ ...prev, [field]: e.target.value }));
     };
@@ -83,12 +55,10 @@ function Memory() {
         const file = e.target.files[0];
         if (!file) return;
 
-        setIsLoading(true);
+        setIsUploading(true); // Use local loading state for upload
         try {
             const form = new FormData();
             form.append("pdf", file);
-            
-            // Should likely pass userId here too if your PDF processor needs to save to a specific user folder
             if (user?._id) form.append("userId", user._id); 
 
             const { data } = await axiosInstance.post(
@@ -99,19 +69,26 @@ function Memory() {
             
             setMemoryData(prev => ({
                 ...prev,
-                structuredData: data.structuredData
+                structuredData: data.structuredData,
+                pdfFilename: file.name // Optimistically update name
             }));
 
             setLocalPdfFilename(file.name);
         } catch (err) {
             console.error("Error processing PDF:", err);
+            setSaveStatus("Error uploading PDF");
         } finally {
-            setIsLoading(false);
+            setIsUploading(false);
         }
     };
 
     const handleClearPdf = () => {
-        setMemoryData(prev => ({ ...prev, structuredData: null, pdfFile: null }));
+        setMemoryData(prev => ({ 
+            ...prev, 
+            structuredData: null, 
+            pdfFilename: null,
+            pdfFile: null 
+        }));
         setLocalPdfFilename('');
     };
 
@@ -124,7 +101,7 @@ function Memory() {
         setSaveStatus('Saving...');
         try {
             const payload = {
-                userId: user._id, // <--- 3. CRITICAL FIX: Send the User ID
+                userId: user._id,
                 wyd,
                 know,
                 trait,
@@ -142,7 +119,7 @@ function Memory() {
         }
     };
 
-    // ============ MAIN RENDER (Unchanged) ============
+    // ============ MAIN RENDER ============
     return (
         <div className="relative w-full h-screen text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 font-sans">
             <DarkVeil className="absolute inset-0 w-full h-full z-0" />
@@ -183,7 +160,7 @@ function Memory() {
                                     <input
                                         type="text"
                                         id="wyd"
-                                        value={wyd}
+                                        value={wyd || ''}
                                         onChange={handleInputChange('wyd')}
                                         placeholder="e.g., Software Developer"
                                         className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-white/50 rounded-xl p-3 border border-white/10 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none transition-all duration-200"
@@ -198,7 +175,7 @@ function Memory() {
                                     </label>
                                     <textarea
                                         id="know"
-                                        value={know}
+                                        value={know || ''}
                                         onChange={handleInputChange('know')}
                                         rows={6}
                                         placeholder="e.g., I work with React and Node.js, interested in AI."
@@ -215,7 +192,7 @@ function Memory() {
                                     <input
                                         type="text"
                                         id="trait"
-                                        value={trait}
+                                        value={trait || ''}
                                         onChange={handleInputChange('trait')}
                                         placeholder="e.g., Friendly, concise, and a bit witty."
                                         className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-white/50 rounded-xl p-3 border border-white/10 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none transition-all duration-200"
@@ -258,8 +235,8 @@ function Memory() {
                                     />
                                 </label>
 
-                                {/* Loading State */}
-                                {isLoading && (
+                                {/* PDF Uploading Loading State */}
+                                {isUploading && (
                                     <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-5 h-5 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
@@ -269,7 +246,7 @@ function Memory() {
                                 )}
 
                                 {/* File Info Display */}
-                                {localPdfFilename && !isLoading && (
+                                {localPdfFilename && !isUploading && (
                                     <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-3 min-w-0">
