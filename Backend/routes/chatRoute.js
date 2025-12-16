@@ -1,14 +1,14 @@
 import express from "express";
 import { streamChatCompletion, getChatById } from "../controllers/chatController.js";
-// import { protect } from "../middleware/authMiddleware.js"; // Optional: Add auth middleware
+// IMPORT the middleware
+import { protectRoute } from "../middleware/authMiddleware.js"; 
 
 const router = express.Router();
 
-// Route to handle sending a message and getting a streamed response
-// This will create a new chat or add to an existing one.
-router.post("/stream", streamChatCompletion);
+// Apply protectRoute so req.user is available
+router.post("/stream", protectRoute, streamChatCompletion);
 
-// Route to get a specific chat and its full message history
-router.get("/:chatId", getChatById);
+// Apply protectRoute so users can only see their own chats
+router.get("/:chatId", protectRoute, getChatById);
 
 export default router;

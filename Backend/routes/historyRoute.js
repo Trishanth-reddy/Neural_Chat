@@ -1,10 +1,12 @@
 import express from 'express';
 import { getUserHistoryDetails } from '../controllers/historyController.js';
-// import { protectRoute } from '../middleware/authMiddleware.js'; // Optional: Add auth middleware
+// IMPORT the middleware
+import { protectRoute } from '../middleware/authMiddleware.js'; 
 
 const router = express.Router();
 
-// This single route provides all the formatted data for the history page.
-router.get('/:userId', getUserHistoryDetails);
+// CRITICAL: Protect this route. 
+// Otherwise, anyone can see anyone else's history by guessing the ID.
+router.get('/:userId', protectRoute, getUserHistoryDetails);
 
 export default router;
