@@ -14,7 +14,7 @@ const Sidebar = ({ expanded, setExpanded }) => {
         event.preventDefault(); // Prevents the link from navigating immediately
         try {
             await axios.post(
-                'https://neural-chat-prss.onrender.com/api/auth/v1/logout', // Corrected the endpoint to /logout
+                'http://localhost:5000/api/auth/v1/logout', // Corrected the endpoint to /logout
                 {}, // POST requests should have a body, even if empty
                 { withCredentials: true } // Ensures the browser sends the auth cookie to be cleared
             );

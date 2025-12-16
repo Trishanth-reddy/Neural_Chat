@@ -6,7 +6,6 @@ import axiosInstance from '../../api/axiosInstance.js';
 
 
 function Memory() {
-    // ============ ALL HOOKS AT THE TOP - BEFORE ANY CONDITIONS ============
     const context = useContext(MemoryContext);
     const [localPdfFilename, setLocalPdfFilename] = useState('');
     const [isLoading, setIsLoading] = useState(false);

@@ -10,15 +10,12 @@ const Chat = () => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [useMemory, setUseMemory] = useState(false);
-    
     const { memoryData } = useContext(MemoryContext);
     const { user } = useAuth();
     const { chatId } = useParams();
     const navigate = useNavigate();
 
-    // Effect to load existing chat history when the component mounts or chatId changes
     useEffect(() => {
-        // Clear messages when starting a new chat (no chatId)
         if (!chatId) {
             setMessages([]);
             return;
@@ -27,7 +24,7 @@ const Chat = () => {
         const fetchChatHistory = async () => {
             setLoading(true);
             try {
-                const response = await axios.get(`https://neural-chat-prss.onrender.com/api/chat/v1/${chatId}`, {
+                const response = await axios.get(`http://localhost:5000/api/chat/v1/${chatId}`, {
                     withCredentials: true,
                 });
                 setMessages(response.data.messages);
@@ -40,7 +37,7 @@ const Chat = () => {
         };
         
         fetchChatHistory();
-    }, [chatId]); // This effect re-runs whenever the URL's chatId changes
+    }, [chatId]); 
 
     const handleChange = (e) => setInput(e.target.value);
 
@@ -75,9 +72,9 @@ My question is: ${currentInput}`;
         }
 
         try {
-            const response = await axios.post('https://neural-chat-prss.onrender.com/api/chat/v1/stream', {
+            const response = await axios.post('http://localhost:5000/api/chat/v1/stream', {
                 userId: user._id,
-                chatId: chatId, // Pass current chatId (or undefined for a new chat)
+                chatId: chatId, 
                 message: userMessage,
                 fullPrompt: finalPrompt,
             }, {
@@ -87,7 +84,7 @@ My question is: ${currentInput}`;
             const newChatData = response.data;
             setMessages(newChatData.messages);
 
-            // If this was a new chat, redirect to the new chat's URL
+            
             if (!chatId && newChatData._id) {
                 navigate(`/chat/${newChatData._id}`, { replace: true });
             }

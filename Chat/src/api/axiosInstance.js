@@ -4,9 +4,10 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL || 'https://neural-chat-prss.onrender.com', // Use env var, fallback to URL
-  withCredentials: true, // <-- THIS IS CORRECT
-
+  // LOGIC: Use the Env Var if it exists. If not, use localhost.
+  baseURL: API_BASE_URL || 'http://localhost:5000', 
+  
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

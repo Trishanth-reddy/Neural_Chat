@@ -1,5 +1,5 @@
 import Chat from '../models/chatModel.js';
-import fetch from 'node-fetch'; // Ensure you have node-fetch installed: npm i node-fetch
+import fetch from 'node-fetch'; 
 
 /**
  * @description Handles the entire chat process: saves user message, streams AI response, saves AI response.
@@ -28,7 +28,8 @@ export const streamChatCompletion = async (req, res) => {
                 { new: true }
             );
         } else {
-            const title = message.content.substring(0, 30);
+            // Create a title from the first 30 chars of the message
+            const title = message.content ? message.content.substring(0, 30) : "New Chat";
             currentChat = await Chat.create({
                 userId,
                 title,
@@ -40,7 +41,7 @@ export const streamChatCompletion = async (req, res) => {
             return res.status(404).json({ message: 'Chat could not be found or created.' });
         }
 
-        // Step 2: Securely call the Mistral AI API for a complete response.
+        // Step 2: Securely call the Mistral AI API
         const mistralResponse = await fetch("https://api.mistral.ai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -48,30 +49,35 @@ export const streamChatCompletion = async (req, res) => {
                 "Authorization": `Bearer ${process.env.MISTRAL_API_KEY}`,
             },
             body: JSON.stringify({
-                model: "mistral-small-latest",
+                // FIXED: Used the free-tier friendly model
+                model: "open-mistral-7b", 
                 messages: [{ role: "user", content: fullPrompt }],
-                // IMPORTANT: stream is now false.
                 stream: false,
             }),
         });
 
+        // SAFETY CHECK: If API fails (e.g., 429 Limit Exceeded), throw error so we don't crash later
         if (!mistralResponse.ok) {
             const errorBody = await mistralResponse.text();
             throw new Error(`Mistral API error: ${mistralResponse.status} ${errorBody}`);
         }
 
-        // Step 3: Parse the single JSON response from the AI.
+        // Step 3: Parse the JSON response from the AI.
         const aiResponseData = await mistralResponse.json();
-        const fullAIResponseContent = aiResponseData.choices[0]?.message?.content || "";
+        
+        // FIXED: safely get content. If it's missing/null, use empty string.
+        const rawContent = aiResponseData.choices?.[0]?.message?.content;
+        const fullAIResponseContent = rawContent ? String(rawContent) : "";
 
         let finalChat;
+        
         // Step 4: Save the complete AI response to the database.
         if (fullAIResponseContent) {
             finalChat = await Chat.findByIdAndUpdate(currentChat._id, {
+                // FIXED: We now know fullAIResponseContent is definitely a string, so .trim() works
                 $push: { messages: { role: 'assistant', content: fullAIResponseContent.trim() } }
-            }, { new: true }); // Use {new: true} to get the fully updated document
+            }, { new: true });
         } else {
-            // If the AI returns no content, just return the chat as is.
             finalChat = currentChat;
         }
         
@@ -80,6 +86,7 @@ export const streamChatCompletion = async (req, res) => {
 
     } catch (error) {
         console.error("Error in chatCompletion:", error);
+        // Ensure we don't try to send a response twice
         if (!res.headersSent) {
             res.status(500).json({ message: `Server Error: ${error.message}` });
         }

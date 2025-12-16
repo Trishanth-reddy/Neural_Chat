@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (username, email, password) => {
     setIsLoading(true);
-    try {
+    try { 
       const { data } = await axiosInstance.post('/api/auth/v1/signup', { username, email, password });
       setUser(data);
       navigate('/');
