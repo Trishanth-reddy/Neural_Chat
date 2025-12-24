@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // 1. Force local URL as requested
-const API_BASE_URL = 'https://neural-chat-prss.onrender.com/api'; 
+const API_BASE_URL = 'https://neural-chat-prss.onrender.com'; 
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,

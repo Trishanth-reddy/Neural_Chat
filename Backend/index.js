@@ -44,7 +44,8 @@ app.use(cookieParser());
 // Define origins as a proper array
 const allowedOrigins = [
   process.env.FRONTEND_URL, // This should be 'https://neural-chat-sooty.vercel.app'
-  "http://localhost:5173"   // For local development
+  "http://localhost:5173",
+  "https://neural-chat-sooty.vercel.app"  
 ];
 
 const corsOptions = {
